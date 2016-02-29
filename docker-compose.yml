@@ -1,41 +1,31 @@
-datadb:
-  image: postgres
-  volumes:
-    - /data/sonar-postgres:/var/lib/postgresql
-  command: /bin/true
-
-db:
-  image: postgres
-  volumes_from:
-    - datadb
-  environment:
-   - POSTGRES_USER=sonar
-   - POSTGRES_PASSWORD=sonar
-
-plugins:
-  image: sonarqube:5.3
-  volumes:
-   - /data/sonar-extensions:/opt/sonarqube/extensions
-   - /data/sonar-plugins:/opt/sonarqube/lib/bundled-plugins
-  command: /bin/true
-
-conf:
-  image: sonarqube:5.3
-  volumes:
-  - /data/sonar-conf/sonar.properties:/opt/sonarqube/conf/sonar.properties
-  command: /bin/true
-
-sonarqube:
-  image: sonarqube:5.3
-  ports:
-   - "9000:9000"
-  links:
-   - db
-  environment:
-   - SONARQUBE_JDBC_URL=jdbc:postgresql://db:5432/sonar
-   - HTTP_PROXY=http://10.200.100.15:80/
-   - HTTPS_PROXY=http://10.200.100.15:80/
-   - NO_PROXY=localhost,127.0.0.1
-  volumes_from:
-   - plugins
-   - conf
+version: '2'
+services:
+  sonarqube:
+    image: sonarqube:latest
+    ports:
+      - "9000:9000"
+    depends_on:
+      - postgres
+    environment:
+     - SONARQUBE_JDBC_URL=jdbc:postgresql://postgres:5432/sonar
+    volumes:
+      - /data/sonarqube/extensions:/opt/sonarqube/extensions
+      - /data/sonarqube/plugins:/opt/sonarqube/lib/bundled-plugins
+      - /data/sonarqube/conf/sonar.properties:/opt/sonarqube/conf/sonar.properties
+    networks:
+      - front-tier
+      - back-tier
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+    volumes:
+      - /data/sonarqube/postgres:/var/lib/postgresql
+    networks:
+      - back-tier
+networks:
+  front-tier:
+    driver: bridge
+  back-tier:
+    driver: bridge
