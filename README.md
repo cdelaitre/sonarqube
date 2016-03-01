@@ -2,7 +2,7 @@
 
 Features
 - sonarqube & postgres containers composition
-- isolated front-end & back-end networks
+- isolated front & back networks
 
 Requires
 - docker 1.10.2
